@@ -1,4 +1,4 @@
-# Predicting-Calories-from-Nutrition-Info
+# Predicting Number of Calories in a Recipe Based on Nutrition Info
 
 
 ## Framing the Problem
@@ -9,7 +9,13 @@ Datasets, cleaning, and Exploratory Data Analysis are performed [here](https://m
 
 All of the data needed from the original datasets needed for this project is contained in the 'nutrition' column, seen below.
 
-|    | nutrition                                    |\n|---:|:---------------------------------------------|\n|  0 | [138.4, 10.0, 50.0, 3.0, 3.0, 19.0, 6.0]     |\n|  1 | [595.1, 46.0, 211.0, 22.0, 13.0, 51.0, 26.0] |\n|  2 | [194.8, 20.0, 6.0, 32.0, 22.0, 36.0, 3.0]    |\n|  3 | [194.8, 20.0, 6.0, 32.0, 22.0, 36.0, 3.0]    |\n|  4 | [194.8, 20.0, 6.0, 32.0, 22.0, 36.0, 3.0]    |
+|    | nutrition|
+|---:|:---------------------------------------------|
+|  0 | [138.4, 10.0, 50.0, 3.0, 3.0, 19.0, 6.0]     |
+|  1 | [595.1, 46.0, 211.0, 22.0, 13.0, 51.0, 26.0] |
+|  2 | [194.8, 20.0, 6.0, 32.0, 22.0, 36.0, 3.0]    |
+|  3 | [194.8, 20.0, 6.0, 32.0, 22.0, 36.0, 3.0]    |
+|  4 | [194.8, 20.0, 6.0, 32.0, 22.0, 36.0, 3.0]    |
 
 
 ## Baseline Model
