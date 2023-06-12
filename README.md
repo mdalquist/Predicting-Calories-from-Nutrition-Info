@@ -34,6 +34,10 @@ To start, I will create a baseline model predicting calories based on grams of f
 
 Code for sklearn Linear Regression pipeline:
 
+    from sklearn.linear_model import LinearRegression
+    from sklearn.model_selection import train_test_split
+    from sklearn.pipeline import Pipeline
+    from sklearn.metrics import mean_squared_error
     base_pl = Pipeline([
         ('lin-reg', LinearRegression())
     ])
@@ -49,7 +53,7 @@ The RMSE of the test data for this model is 110. An RMSE of 110 for this predict
 
 ## Final Model
 
-In order to improve this model, I am going to add the rest of the nutrition features and see how much it improves the RMSE. I assume the only additional feature that will be useful in the prediciton is protein, but I will add all of them for due dilligence. Afterwards, I will run a Lasso on the new model, which will help me find and remove the features it deems to be irrelevant for predicting calories.
+In order to improve this model, I am going to add the rest of the nutrition features and see how much it improves the RMSE. I assume the only additional feature that will be useful in the prediciton is protein, as it is the final of the three calorie-containing macronutrients not contained in the baseline model, but I will add all of them for due dilligence. Afterwards, I will run a Lasso on the new model, which will help me find and remove the features it deems to be irrelevant for predicting calories.
 
 Code for new sklearn Linear Regression pipeline, predicting Calories from X_test, and finding RMSE:
 
@@ -64,7 +68,11 @@ The RMSE of the linear regression model using all the nutrition facts is 54.18. 
 
 The Lasso is a variable selection method that works by squeezing the regression coefficients towards 0 during calculations. If the Lasso squeezes a coefficient all the way to 0, it has determined that the variable corresponding to that coefficient does not have a significant effect on the regression model. This helps identify which variables are important and which can be removed.
 
-The lasso_path() function in sklearn's linear_model package allows for testing of multiple different alpha values, the hyperparameter in the Lasso controlling the shrinkage. Alpha needs to be tuned, and the values in the dataframe below are the lasso regression coefficients for each feature for each alpha value tested. I ran the function for alpha values between 0.5 and 4.5, at increments of 0.5. The results are shown below.
+The lasso_path() function in sklearn's linear_model package allows for testing of multiple different alpha values, the hyperparameter in the Lasso controlling the shrinkage. Alpha needs to be tuned, and the values in the dataframe below are the lasso regression coefficients for each feature for each alpha value tested. I ran the function for alpha values between 0.5 and 4.5, at increments of 0.5. Code and results are shown below.
+
+    from sklearn import linear_model
+    _, lasso_tests, _ = linear_model.lasso_path(X_train, y_train, alphas = np.arange(0.5, 5, 0.5))
+    pd.DataFrame(lasso_tests, index = X_train.columns, columns = np.arange(0.5, 5, 0.5))
 
 |               | 0.5 | 1.0 | 1.5 | 2.0 | 2.5 | 3.0 | 3.5 | 4.0 | 4.5 |
 |:--------------|-----------:|------------:|------------:|-----------:|------------:|------------:|------------:|-----------:|-----------:|
@@ -93,7 +101,15 @@ This process can be replicated using the LassoCV function from sklearn.linear_mo
     las = linear_model.LassoCV(cv = 5, random_state = 42).fit(X_train, y_train)
     np.sqrt(mean_squared_error(y_test,las.predict(X_test)))
     
-The final model isthe lasso regression model found using the LassoCV() method and saved in the variable las
+The final model is the lasso regression model found using the LassoCV() method and saved in the variable las
 
 ## Fairness Analysis
+
+In order to assess the fairness of my model, I will split the data into two groups, one low calorie group (recipes under 300 calories) and one high calorie group (recipes over 300 calories), and run a permutation test with the test statistic being difference in RMSE. I will take the difference high RMSE - low RMSE, so a positive value would be more error for the high group, and a negative value would be more error for the low group.
+
+Null Hypothesis: The difference in RMSE between the low and high calorie groups is 0. The model is fair between the two groups.
+
+Alternative Hypothesis: The difference in RMSE between the low and high calorie groups is not 0. The model is not fair between the two groups, there are more accurate predictions for one group than the other.
+
+To run the permutation test, I first calculated the observed difference in RMSE from my model. The result was quite surprising, as the difference came out to 53.53 (the RMSE for the high calorie group was 53.53 units higher than the RMSE in the low calorie group). To see if this result is significant, I calculated the difference in RMSE for 1000 different permutations of the group labels. The distribution of these resamples and the observed test statistic (vertical red line) are shown below.
 
