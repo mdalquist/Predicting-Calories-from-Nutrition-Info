@@ -17,7 +17,7 @@ The original data comes from [food.com](food.com), where contributors can add th
 |  3 | [194.8, 20.0, 6.0, 32.0, 22.0, 36.0, 3.0]    |
 |  4 | [194.8, 20.0, 6.0, 32.0, 22.0, 36.0, 3.0]    |
 
-Below is the final cleaned dataframe used to build the regression models. It was obtained by isolating the splitting the strings from the nutrition column and adding a new column for each nutrient. Also, each column is converted from percentage of daily value to grams. The conversions come from the [FDA](https://netrition.com/pages/reference-values-for-nutrition-labeling) daily recommendations. These values are sometimes changed by the FDA, so using the wrong conversion can cause error. Using an example from [food.com](https://www.food.com/recipe/chickpea-and-fresh-tomato-toss-51631), I believe the website uses old recommendations of 65 grams of total fat and 25 grams of added sugar daily, which differ from the current recommendations of 78g and 50g, respectively. The other recommended daily values are: sodium, 2.3g; protein, 50g; saturated fat, 20g; carbohydrates, 275g. Each row is indexed by the recipe id from the original dataset, which is used to match the rows and drop the duplicate recipes.
+Below is the final cleaned dataframe used to build the regression models. It was obtained by splitting the strings from the nutrition column by each nutrient and separating them into their own columns. After, each nutrient column is converted from percentage of daily value to grams. The conversions come from the [FDA](https://netrition.com/pages/reference-values-for-nutrition-labeling) daily recommendations. The FDA updates these values periodically, so using the wrong conversion can cause error. Using an example from [food.com](https://www.food.com/recipe/chickpea-and-fresh-tomato-toss-51631), I believe the website uses old recommendations of 65 grams of total fat and 25 grams of added sugar daily, which differ from the current recommendations of 78g and 50g, respectively. The other current recommended daily values are: sodium, 2.3g; protein, 50g; saturated fat, 20g; carbohydrates, 275g. Each row is indexed by the recipe id from the original dataset, which is used to match the rows and drop the duplicate recipes.
 
 | id | calories | total fat | sugar | sodium | protein | saturated fat | carbohydrates |
 |-------:|-----------:|------------:|--------:|---------:|----------:|----------------:|----------------:|
@@ -30,12 +30,11 @@ Below is the final cleaned dataframe used to build the regression models. It was
 
 ## Baseline Model
 
-To start, I will create a baseline model predicting calories based on grams of fat and grams of carbohydrates. I've chosen these to start because they are macronutrients and directly contribute to calories in food. One gram of fat has 9 calories and one gram of carbohydrates has 4 calories. Linear regression will be executed using sklearn, and the model's performance will be evaluated using RMSE. Both of the features are numeric features, and do not need to be engineered to be adequate for the linear regression model. Before fitting the linear regression model, the final cleaned dataframe was split into train and test sets (25% test split). Each set is split by features and response, with the features being stored in X_train and X_test, and the response (calories), being stored in y_train and y_test.
+To start, I will create a baseline model predicting calories based on grams of fat and grams of carbohydrates. I've chosen these to start because they are macronutrients and directly contribute to calories in food. One gram of fat has 9 calories and one gram of carbohydrates has 4 calories. Linear regression will be executed using sklearn, and the model's performance will be evaluated using RMSE. Both of the features are numeric features, and do not need to be engineered any further to be ready for the linear regression model. Before fitting the linear regression model, the final cleaned dataframe was split into train and test sets (25% test split). Each set is split by features and response, with the features being stored in X_train and X_test, and the response (calories), being stored in y_train and y_test.
 
 Code for sklearn Linear Regression pipeline:
 
     from sklearn.linear_model import LinearRegression
-    from sklearn.model_selection import train_test_split
     from sklearn.pipeline import Pipeline
     from sklearn.metrics import mean_squared_error
     base_pl = Pipeline([
@@ -83,7 +82,7 @@ The lasso_path() function in sklearn's linear_model package allows for testing o
 | saturated fat |  0         |  0          |  0          |  0         |  0          |  0          |  0          | -0         | -0         |
 | carbohydrates |  4.25084   |  4.2501     |  4.24992    |  4.24987   |  4.24999    |  4.25028    |  4.2506     |  4.25086   |  4.25113   |
 
-The interpretation of the Lasso Regresssion across the tested alpha values is the same. Total Fat, Protein, and Carbohydrates are the three features that are the most relevant to predicting the number of calories. The other three features saw their coefficients shrink to 0 (or very close to 0), deeming them irrelevent. This makes sense, as these are the three macronutrients that make up food and provide calories. The coefficients also make sense, as fat has about 9 calories per gram, and protein and carbs each have about 4 calories per gram.
+The interpretation of the Lasso Regresssion across the tested alpha values is the same. Total Fat, Protein, and Carbohydrates are the three features that are the most relevant to predicting the number of calories. The other three features saw their coefficients shrink to 0 (or very close to 0), deeming them irrelevent. This makes sense, as these are the three macronutrients that provide calories in food. The coefficients also make sense, as fat has about 9 calories per gram, and protein and carbs each have about 4 calories per gram.
 
 Using the variables the Lasso deemed to be the most important: Total Fat, Protein, and Carbohydrates, the Linear Regression model can be rerun for a third time with only these three features.
 
@@ -94,9 +93,9 @@ Using the variables the Lasso deemed to be the most important: Total Fat, Protei
     select_preds = select_pl.predict(X_test[['total fat', 'protein', 'carbohydrates']])
     rmse_select = np.sqrt(mean_squared_error(y_test, select_preds))
     
-The RMSE for this model came out to 54.1, virtually the same as the model with all 6 features. This is expected, as the three features are simply a subset of the 6 used for the previous model. However, without the extra variables, this new model is a better model because it is simpler. Simpler models with less features are preferred over more complicated models with more features.
+The RMSE for this model came out to 54.1, virtually the same as the model with all 6 features. This is expected, as the three features are simply a subset of the 6 used for the previous model. However, without the extra variables, this is a better model because it is simpler and has less features, which is preferred over a more complicated model with more features.
 
-This process can be replicated using the LassoCV function from sklearn.linear_model, which handles the cross validation and tuning for the hyperparameter alpha as well as the predictions for the test data. The same result is found, RMSE is also 54.1.
+This process can be replicated using the LassoCV function from sklearn.linear_model, which handles the cross validation and tuning for the hyperparameter alpha as well as the predictions for the test data. The 'cv' argument allows the user to input the number of folds the function will use in its internal K-fold cross validation to find alpha. 5 is the default, and I stuck with it here. The same error is found, RMSE is also 54.1.
 
     las = linear_model.LassoCV(cv = 5, random_state = 42).fit(X_train, y_train)
     np.sqrt(mean_squared_error(y_test,las.predict(X_test)))
@@ -105,7 +104,7 @@ The final model is the lasso regression model found using the LassoCV() method a
 
 ## Fairness Analysis
 
-In order to assess the fairness of my model, I will split the data into two groups, one low calorie group (recipes under 300 calories) and one high calorie group (recipes over 300 calories), and run a permutation test with the test statistic being difference in RMSE. I will take the difference high RMSE - low RMSE, so a positive value would be more error for the high group, and a negative value would be more error for the low group.
+In order to assess the fairness of my model, I will split the data into two groups, one low calorie group (recipes under 300 calories) and one high calorie group (recipes over 300 calories), and run a permutation test with the test statistic being difference in RMSE. I chose 300 calories as the cutoff for the groups because the median calories in the original recipe dataset is 307, so splitting at 300 would put roughly half of the data in each group. I will take the difference high RMSE - low RMSE, so a positive value would be more error for the high group, and a negative value would be more error for the low group.
 
 Null Hypothesis: The difference in RMSE between the low and high calorie groups is 0. The model is fair between the two groups.
 
@@ -115,6 +114,6 @@ To run the permutation test, I first calculated the observed difference in RMSE 
 
 <iframe src="perm_dist.html" width=800 height=600 frameBorder=0></iframe>
 
-As seen in the graph above, there are no values more extreme than the observed difference in RMSE of 53.53, so the p-value for the permutation test is 0. Therefore, the null hypothesis is rejected, there is evidence to prove that the lasso regression model is unfair.
+As seen in the graph above, there are no values more extreme than the observed difference in RMSE of 53.53, so the p-value for the permutation test is 0. Therefore, the null hypothesis is rejected at the 0.001 significance level, and there is evidence to prove that the lasso regression model is unfair.
 
-The model's predictions are far more inaccurate for higher calorie recipes than lower calorie recipes. Therefore, the model can be improved. However, the explanation for why the model performs worse for higher calorie recipes is complicated. The relationship between total fat, carbs, and protein and calories should be perfectly linear. Fat has 9 calories per gram, and carbs and protein each have 4 calories per gram. It should roughly follow the equation: calories = 9 * (g fat) + 4 * (g protein) + 4 * (g carbs). The Lasso determined that these were the three most influential factors in the model, as they should be, yet there is still a significant difference in accuracy of predictions across groups. Perhaps the input data is more inaccurate or has higher variance for the higher calorie meals, as the number of calories could be harder to calculate with bigger meals. Further investigation is needed to determine the reason for the difference in accuracy between the low calorie recipes and high calorie recipes. 
+The model's predictions are far more inaccurate for higher calorie recipes than lower calorie recipes. The model must be improved before it can be reliably used. However, the explanation for why the model performs worse for higher calorie recipes is complicated. The relationship between total fat, carbs, and protein and calories should be perfectly linear. Fat has 9 calories per gram, and carbs and protein each have 4 calories per gram. There shouldn't be any polynomial features. It should follow the equation: calories = 9 * (g fat) + 4 * (g protein) + 4 * (g carbs). The Lasso determined that these were the three most influential factors in the model, as they should be, yet there is still a significant difference in accuracy of predictions across groups. Perhaps the input data is more inaccurate or has higher variance for the higher calorie meals, as the number of calories could be harder to calculate with bigger meals. Further investigation is needed to determine the reason for the difference in accuracy between the low calorie recipes and high calorie recipes. 
