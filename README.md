@@ -114,6 +114,7 @@ To run the permutation test, I first calculated the observed difference in RMSE 
 
 <iframe src="perm_dist.html" width=800 height=600 frameBorder=0></iframe>
 
+
 As seen in the graph above, there are no values more extreme than the observed difference in RMSE of 53.53, so the p-value for the permutation test is 0. Therefore, the null hypothesis is rejected at the 0.001 significance level, and there is evidence to prove that the lasso regression model is unfair.
 
 The model's predictions are far more inaccurate for higher calorie recipes than lower calorie recipes. The model must be improved before it can be reliably used. However, the explanation for why the model performs worse for higher calorie recipes is complicated. The relationship between total fat, carbs, and protein and calories should be perfectly linear. Fat has 9 calories per gram, and carbs and protein each have 4 calories per gram. There shouldn't be any polynomial features. It should follow the equation: calories = 9 * (g fat) + 4 * (g protein) + 4 * (g carbs). The Lasso determined that these were the three most influential factors in the model, as they should be, yet there is still a significant difference in accuracy of predictions across groups. Perhaps the input data is more inaccurate or has higher variance for the higher calorie meals, as the number of calories could be harder to calculate with bigger meals. Further investigation is needed to determine the reason for the difference in accuracy between the low calorie recipes and high calorie recipes. 
